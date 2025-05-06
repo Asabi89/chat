@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Privacy & Security | NoChat{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <h1 class="text-2xl font-bold mb-6">Privacy & Security</h1>
+        
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300{% elif message.tags == 'error' %}bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300{% else %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold">Account Privacy</h2>
+            </div>
+            <div class="p-6">
+                <form method="POST" action="{% url 'accounts:update_privacy' %}">
+                    {% csrf_token %}
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="is_private" name="is_private" type="checkbox" {% if user.is_private %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="is_private" class="font-medium text-gray-700 dark:text-gray-300">Private Account</label>
+                                <p class="text-gray-500 dark:text-gray-400">When your account is private, only people you approve can see your photos and videos.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="show_activity_status" name="show_activity_status" type="checkbox" {% if user.show_activity_status %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="show_activity_status" class="font-medium text-gray-700 dark:text-gray-300">Show Activity Status</label>
+                                <p class="text-gray-500 dark:text-gray-400">Allow accounts you follow and anyone you message to see when you were last active.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="allow_sharing" name="allow_sharing" type="checkbox" {% if user.allow_sharing %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="allow_sharing" class="font-medium text-gray-700 dark:text-gray-300">Allow Sharing</label>
+                                <p class="text-gray-500 dark:text-gray-400">Let people share your posts in their stories and messages.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="allow_mentions" name="allow_mentions" type="checkbox" {% if user.allow_mentions %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="allow_mentions" class="font-medium text-gray-700 dark:text-gray-300">Allow Mentions</label>
+                                <p class="text-gray-500 dark:text-gray-400">Allow others to mention you in their posts and comments.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold">Blocked Accounts</h2>
+            </div>
+            <div class="p-6">
+                {% if blocked_users %}
+                <div class="space-y-4">
+                    {% for blocked in blocked_users %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <img src="{{ blocked.blocked_user.profile_picture.url }}" alt="{{ blocked.blocked_user.username }}" class="w-10 h-10 rounded-full object-cover">
+                            <div class="ml-3">
+                                <p class="font-medium text-gray-800 dark:text-gray-200">{{ blocked.blocked_user.username }}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ blocked.blocked_user.get_full_name }}</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="{% url 'accounts:unblock_user' blocked.blocked_user.username %}">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none text-sm">
+                                Unblock
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <p class="text-gray-500 dark:text-gray-400">You haven't blocked any accounts.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold">Security</h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Two-Factor Authentication</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-4">Add an extra layer of security to your account by requiring a verification code in addition to your password.</p>
+                        <a href="{% url 'accounts:two_factor_setup' %}" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            {% if user.two_factor_enabled %}
+                            Manage Two-Factor Authentication
+                            {% else %}
+                            Set Up Two-Factor Authentication
+                            {% endif %}
+                        </a>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Login Activity</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-4">Review where you're logged in and log out of specific sessions.</p>
+                        <a href="{% url 'accounts:login_activity' %}" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                            View Login Activity
+                        </a>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">Password Security</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mb-4">Change your password to keep your account secure.</p>
+                        <a href="{% url 'accounts:change_password' %}" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none">
+                            Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NoChat - Feedback Submitted{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 p-4">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+            <div class="mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            
+            <h1 class="text-2xl font-bold mb-4">Thank You for Your Feedback!</h1>
+            
+            <p class="mb-6 text-gray-600 dark:text-gray-400">
+                We appreciate you taking the time to share your thoughts with us. Your feedback helps us improve NoChat for everyone.
+            </p>
+            
+            <div class="flex justify-center space-x-4">
+                <a href="{% url 'core:home' %}" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Return to Home
+                </a>
+                <a href="{% url 'core:feedback' %}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Submit Another Feedback
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

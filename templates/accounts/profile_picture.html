@@ -1,0 +1,1149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }}'s Profile Picture | NoChat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-picture-container {
+        height: calc(100vh - 60px);
+        display: flex;
+        flex-direction: column;
+    }
+    .picture-header {
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(219, 219, 219, 0.2);
+    }
+    .picture-content {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0, 0, 0, 0.9);
+        position: relative;
+        overflow: hidden;
+    }
+    .picture-footer {
+        padding: 12px;
+        border-top: 1px solid rgba(219, 219, 219, 0.2);
+    }
+    .profile-picture-img {
+        max-height: 80vh;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    /* Gallery slider styles */
+    .gallery-slider {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        transition: transform 0.3s ease;
+    }
+    .gallery-item {
+        min-width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .gallery-dots {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+    .gallery-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+    }
+    .gallery-dot.active {
+        background-color: white;
+    }
+    .nav-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        color: white;
+        transition: opacity 0.3s ease;
+    }
+    .nav-prev {
+        left: 20px;
+    }
+    .nav-next {
+        right: 20px;
+    }
+    
+    /* Comment styles */
+    .comments-container {
+        max-height: 200px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+    }
+    .comments-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    .comments-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .comments-container::-webkit-scrollbar-thumb {
+        background-color: rgba(155, 155, 155, 0.5);
+        border-radius: 20px;
+    }
+    
+    /* Share modal styles */
+    .share-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+    }
+    .share-content {
+        background-color: #1f2937;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        overflow: hidden;
+    }
+    .share-option {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .share-option:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    .share-option svg {
+        margin-right: 12px;
+    }
+    
+    /* Heart animation for double tap */
+    .heart-animation {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 20;
+        pointer-events: none;
+    }
+    .animate-heart {
+        animation: heart-pulse 1s ease-in-out forwards;
+    }
+    @keyframes heart-pulse {
+        0% {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 profile-picture-container bg-white dark:bg-gray-800">
+    <!-- Header -->
+    <div class="picture-header bg-white dark:bg-gray-800">
+        <a href="{% url 'accounts:profile' username=profile_user.username %}" class="mr-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div class="flex items-center">
+            <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.username }}" class="w-8 h-8 rounded-full mr-2">
+            <span class="font-semibold">{{ profile_user.username }}</span>
+            {% if profile_user.is_verified %}
+            <span class="inline-flex items-center justify-center bg-blue-500 text-white rounded-full h-4 w-4 ml-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            </span>
+            {% endif %}
+        </div>
+        <div class="ml-auto relative">
+            <button id="options-menu" class="focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+            </button>
+            <div id="options-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10">
+                <div class="py-1">
+                    {% if request.user == profile_user %}
+                    <a href="{% url 'accounts:edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        Change Profile Photo
+                    </a>
+                    <button id="delete-photo-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        Delete Photo
+                    </button>
+                    {% else %}
+                    <button id="report-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600">
+                        Report
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Picture Content with Gallery Slider -->
+    <div class="picture-content" id="swipe-area">
+        <div class="gallery-slider" id="gallery-slider" data-current-index="0">
+            {% for item in gallery_items %}
+            <div class="gallery-item {% if forloop.first %}active{% endif %}" 
+                 data-index="{{ forloop.counter0 }}" 
+                 data-id="{{ item.id }}"
+                 data-likes="{{ item.likes_count }}"
+                 data-comments="{{ item.comments_count }}"
+                 data-caption="{{ item.caption }}"
+                 data-date="{{ item.created_at|date:'Y-m-d H:i:s' }}">
+                <img src="{{ item.file.url }}" alt="{{ profile_user.username }}'s picture" class="profile-picture-img">
+            </div>
+            {% empty %}
+            <!-- Fallback to current profile picture if no gallery items -->
+            <div class="gallery-item active" data-index="0" data-id="profile-pic">
+                <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.username }}'s profile picture" class="profile-picture-img">
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Gallery navigation dots -->
+        <div class="gallery-dots" id="gallery-dots">
+            {% for item in gallery_items %}
+            <div class="gallery-dot {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}"></div>
+            {% empty %}
+            <div class="gallery-dot active" data-index="0"></div>
+            {% endfor %}
+        </div>
+        
+        <!-- Navigation arrows -->
+        <div class="nav-arrow nav-prev" id="prev-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </div>
+        <div class="nav-arrow nav-next" id="next-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </div>
+        
+        
+        
+    </div>
+    
+    <!-- Footer with actions -->
+    <div class="picture-footer bg-white dark:bg-gray-800">
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex space-x-4">
+                <button id="like-btn" data-post-id="" class="focus:outline-none">
+                    {% if is_liked %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                    </svg>
+                    {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {% endif %}
+                </button>
+                <button id="comment-btn" class="focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </button>
+                <button id="share-btn" class="focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                </button>
+            </div>
+            <button id="save-btn" data-post-id="" class="focus:outline-none">
+                {% if is_saved %}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                </svg>
+                {% else %}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                {% endif %}
+            </button>
+        </div>
+        
+        <!-- Likes count -->
+        <div class="mb-2">
+            <span id="likes-count" class="font-semibold">{{ gallery_items.0.likes_count|default:"0" }} likes</span>
+        </div>
+        
+        <!-- Caption -->
+        <div id="caption-container" class="mb-2">
+            {% if gallery_items.0.caption %}
+            <span class="font-semibold">{{ profile_user.username }}</span>
+            <span id="caption-text">{{ gallery_items.0.caption }}</span>
+            {% endif %}
+        </div>
+        
+        <!-- Date -->
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <span id="post-date">{{ gallery_items.0.created_at|date:"F j, Y"|default:"" }}</span>
+        </div>
+        
+        <!-- Comments section -->
+        <!-- Comments count and view all link -->
+        <div class="mb-2 flex items-center">
+            <span id="comments-count" class="text-sm text-gray-600 dark:text-gray-400">{{ profile_picture_post.comments_count|default:"0" }} comments</span>
+            {% if profile_picture_post.comments_count > 0 %}
+            <a href="{% url 'posts:detail' pk=profile_picture_post.id %}#comments-section" class="ml-2 text-sm text-blue-500 hover:underline">View all</a>
+            {% endif %}
+        </div>
+        
+        <!-- Comment form -->
+        <form id="comment-form" class="flex items-center mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+            <img src="{{ request.user.profile_picture.url }}" alt="{{ request.user.username }}" class="w-8 h-8 rounded-full mr-2">
+            <input type="text" id="comment-input" placeholder="Add a comment..." class="comment-input flex-grow dark:text-gray-200">
+            <button type="submit" id="comment-submit" class="text-blue-500 font-semibold ml-2" disabled>Post</button>
+        </form>
+    </div>
+</div>
+
+</div>
+
+<!-- Heart animation for double tap -->
+<div class="heart-animation hidden" id="heart-animation">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-white" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+    </svg>
+</div>
+
+<!-- Share Modal -->
+<div id="share-modal" class="share-modal hidden">
+    <div class="share-content">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-white">Share</h3>
+            <button id="close-share" class="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="share-options">
+            <div id="copy-link-btn" class="share-option">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span class="text-white">Copy Link</span>
+            </div>
+            <div id="share-to-dm" class="share-option">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span class="text-white">Share to Direct Message</span>
+            </div>
+            <div id="share-to-twitter" class="share-option">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 10.054 10.054 0 01-3.127 1.184 4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                </svg>
+                <span class="text-white">Share to Twitter</span>
+            </div>
+            <div id="share-to-facebook" class="share-option">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span class="text-white">Share to Facebook</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Photo Confirmation Modal -->
+<div id="delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full">
+        <h3 class="text-lg font-bold mb-4 text-center">Delete Profile Picture?</h3>
+        <p class="text-gray-600 dark:text-gray-400 text-center mb-6">Are you sure you want to delete your profile picture? This action cannot be undone.</p>
+        <div class="flex justify-center space-x-4">
+            <button id="cancel-delete" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg">Cancel</button>
+            <form action="{% url 'accounts:delete_profile_picture' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-lg">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div id="report-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full">
+        <h3 class="text-lg font-bold mb-4 text-center">Report</h3>
+        <p class="text-gray-600 dark:text-gray-400 text-center mb-6">Why are you reporting this content?</p>
+        <div class="space-y-2">
+            <button class="report-reason w-full text-left px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Spam</button>
+            <button class="report-reason w-full text-left px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Nudity or sexual content</button>
+            <button class="report-reason w-full text-left px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">Hate speech or symbols</button>
+            <button class="report-reason w-full text-left px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">False information</button>
+            <button class="report-reason w-full text-left px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">I just don't like it</button>
+        </div>
+        <div class="flex justify-center mt-6">
+            <button id="cancel-report" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gallery slider functionality
+        const slider = document.getElementById('gallery-slider');
+        const dots = document.getElementById('gallery-dots');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const swipeArea = document.getElementById('swipe-area');
+        const heartAnimation = document.getElementById('heart-animation');
+        let currentIndex = 0;
+        let startX, startY, endX, endY;
+        let items = slider.querySelectorAll('.gallery-item');
+        let itemCount = items.length;
+    
+        // Initialize the slider
+        function updateSlider(index) {
+            if (index < 0) index = 0;
+            if (index >= itemCount) index = itemCount - 1;
+            currentIndex = index;
+            slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+    
+            // Update active dot
+            const allDots = dots.querySelectorAll('.gallery-dot');
+            allDots.forEach(dot => dot.classList.remove('active'));
+            if (allDots[currentIndex]) {
+                allDots[currentIndex].classList.add('active');
+            }
+    
+            // Update post data
+            updatePostData();
+    
+            // Hide prev/next buttons if at the beginning/end
+            prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+            nextBtn.style.opacity = currentIndex === itemCount - 1 ? '0.3' : '1';
+        }
+    
+        // Function to update post data (likes, comments, etc.)
+        function updatePostData() {
+            const currentSlide = items[currentIndex];
+            const postId = currentSlide.getAttribute('data-id');
+            
+            // Update button data attributes
+            const likeBtn = document.getElementById('like-btn');
+            const saveBtn = document.getElementById('save-btn');
+            if (likeBtn) likeBtn.setAttribute('data-post-id', postId || '');
+            if (saveBtn) saveBtn.setAttribute('data-post-id', postId || '');
+            
+            // Update like button appearance based on if the post is liked
+            if (likeBtn && postId) {
+                const isLiked = currentSlide.getAttribute('data-is-liked') === 'true';
+                if (isLiked) {
+                    likeBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                        </svg>
+                    `;
+                } else {
+                    likeBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    `;
+                }
+            }
+            
+            // Update save button appearance
+            if (saveBtn && postId) {
+                const isSaved = currentSlide.getAttribute('data-is-saved') === 'true';
+                if (isSaved) {
+                    saveBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                        </svg>
+                    `;
+                } else {
+                    saveBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                    `;
+                }
+            }
+    
+            // Update likes count
+            const likesCount = currentSlide.getAttribute('data-likes') || 0;
+            document.getElementById('likes-count').textContent = `${likesCount} likes`;
+    
+            // Update comments count
+            const commentsCount = currentSlide.getAttribute('data-comments') || 0;
+            document.getElementById('comments-count').textContent = `${commentsCount} comments`;
+    
+            // Update caption
+            const caption = currentSlide.getAttribute('data-caption') || '';
+            const captionContainer = document.getElementById('caption-container');
+            if (caption) {
+                captionContainer.innerHTML = `<span class="font-semibold">{{ profile_user.username }}</span> <span id="caption-text">${caption}</span>`;
+                captionContainer.classList.remove('hidden');
+            } else {
+                captionContainer.classList.add('hidden');
+            }
+    
+            // Update date
+            const date = currentSlide.getAttribute('data-date') || '';
+            if (date) {
+                const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('post-date').textContent = formattedDate;
+            } else {
+                document.getElementById('post-date').textContent = '';
+            }
+    
+            // Comment button functionality
+        const commentBtn = document.getElementById('comment-btn');
+        const commentInput = document.getElementById('comment-input');
+        
+        if (commentBtn && commentInput) {
+            commentBtn.addEventListener('click', function() {
+                commentInput.focus();
+            });
+        }
+        
+        // Comment input functionality
+        const commentSubmit = document.getElementById('comment-submit');
+        
+        if (commentInput && commentSubmit) {
+            // Enable/disable submit button based on input
+            commentInput.addEventListener('input', function() {
+                commentSubmit.disabled = this.value.trim() === '';
+            });
+        }
+        
+        // Comment form submission
+        const commentForm = document.getElementById('comment-form');
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const postId = document.querySelector('#like-btn').getAttribute('data-post-id');
+                if (!postId) {
+                    showNotification("Cannot comment on this profile picture");
+                    return;
+                }
+                
+                const commentText = commentInput.value.trim();
+                if (!commentText) return;
+                
+                // Redirect to post detail page with comment
+                window.location.href = `/posts/${postId}/?focus=comment#comments-section`;
+            });
+        }
+
+        
+        // Format time ago
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHour / 24);
+            
+            if (diffSec < 60) return 'just now';
+            if (diffMin < 60) return `${diffMin}m ago`;
+            if (diffHour < 24) return `${diffHour}h ago`;
+            if (diffDay < 7) return `${diffDay}d ago`;
+            
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+    
+        // Navigation with buttons
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                updateSlider(currentIndex - 1);
+            }
+        });
+    
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < itemCount - 1) {
+                updateSlider(currentIndex + 1);
+            }
+        });
+    
+        // Navigation with dots
+        dots.querySelectorAll('.gallery-dot').forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                updateSlider(index);
+            });
+        });
+    
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                if (currentIndex > 0) {
+                    updateSlider(currentIndex - 1);
+                }
+            } else if (e.key === 'ArrowRight') {
+                if (currentIndex < itemCount - 1) {
+                    updateSlider(currentIndex + 1);
+                }
+            }
+        });
+    
+        // Swipe navigation
+        swipeArea.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+    
+        swipeArea.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+            
+            const diffX = startX - endX;
+            const diffY = startY - endY;
+            
+            // Only register horizontal swipes
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    // Swipe left
+                    if (currentIndex < itemCount - 1) {
+                        updateSlider(currentIndex + 1);
+                    }
+                } else {
+                    // Swipe right
+                    if (currentIndex > 0) {
+                        updateSlider(currentIndex - 1);
+                    }
+                }
+            }
+        });
+    
+        // Double tap to like
+        let lastTap = 0;
+        swipeArea.addEventListener('click', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // Double tap detected
+                const currentSlide = items[currentIndex];
+                const postId = currentSlide.getAttribute('data-id');
+                
+                if (postId) {
+                    // Show heart animation
+                    heartAnimation.classList.remove('hidden');
+                    heartAnimation.classList.add('animate-heart');
+                    
+                    // Like the post
+                    likePost(postId);
+                    
+                    // Hide heart animation after animation completes
+                    setTimeout(() => {
+                        heartAnimation.classList.add('hidden');
+                        heartAnimation.classList.remove('animate-heart');
+                    }, 1000);
+                }
+                
+                e.preventDefault();
+            }
+            
+            lastTap = currentTime;
+        });
+    
+        // Initialize slider
+        updateSlider(0);
+    
+        // Options menu toggle
+        const optionsMenu = document.getElementById('options-menu');
+        const optionsDropdown = document.getElementById('options-dropdown');
+        
+        optionsMenu.addEventListener('click', function() {
+            optionsDropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!optionsMenu.contains(event.target) && !optionsDropdown.contains(event.target)) {
+                optionsDropdown.classList.add('hidden');
+            }
+        });
+        
+        // Delete photo modal
+        const deletePhotoBtn = document.getElementById('delete-photo-btn');
+        const deleteModal = document.getElementById('delete-modal');
+        const cancelDelete = document.getElementById('cancel-delete');
+        
+        if (deletePhotoBtn) {
+            deletePhotoBtn.addEventListener('click', function() {
+                deleteModal.classList.remove('hidden');
+            });
+        }
+        
+        if (cancelDelete) {
+            cancelDelete.addEventListener('click', function() {
+                deleteModal.classList.add('hidden');
+            });
+        }
+        
+        // Report modal
+        const reportBtn = document.getElementById('report-btn');
+        const reportModal = document.getElementById('report-modal');
+        const cancelReport = document.getElementById('cancel-report');
+        const reportReasons = document.querySelectorAll('.report-reason');
+        
+        if (reportBtn) {
+            reportBtn.addEventListener('click', function() {
+                reportModal.classList.remove('hidden');
+            });
+        }
+        
+        if (cancelReport) {
+            cancelReport.addEventListener('click', function() {
+                reportModal.classList.add('hidden');
+            });
+        }
+        
+        reportReasons.forEach(reason => {
+            reason.addEventListener('click', function() {
+                const reasonText = this.textContent;
+                const currentSlide = items[currentIndex];
+                const postId = currentSlide.getAttribute('data-id');
+                
+                // Submit report
+                submitReport(postId, reasonText);
+                
+                // Close modal
+                reportModal.classList.add('hidden');
+                
+                // Show confirmation
+                alert('Thank you for your report. We will review this content.');
+            });
+        });
+        
+        // Function to submit a report
+        async function submitReport(contentId, reason) {
+            try {
+                const response = await fetch('/core/report/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content_type: 'post', // Now all profile pictures are posts
+                        content_id: contentId,
+                        report_type: reason.toLowerCase().replace(/\s+/g, '_'),
+                        description: `Reported from profile picture view`
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to submit report');
+                }
+            } catch (error) {
+                console.error('Error submitting report:', error);
+            }
+        }
+            // Share modal
+    const shareBtn = document.getElementById('share-btn');
+    const shareModal = document.getElementById('share-modal');
+    const closeShare = document.getElementById('close-share');
+    
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function() {
+            shareModal.classList.remove('hidden');
+        });
+    }
+    
+    if (closeShare) {
+        closeShare.addEventListener('click', function() {
+            shareModal.classList.add('hidden');
+        });
+    }
+    
+    // Copy link functionality
+    const copyLinkBtn = document.getElementById('copy-link-btn');
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', function() {
+            const currentSlide = items[currentIndex];
+            const postId = currentSlide.getAttribute('data-id');
+            let url;
+            
+            // Always use post URL since profile pictures are now posts
+            if (postId) {
+                url = `${window.location.origin}/posts/${postId}/`;
+            } else {
+                // Fallback to profile URL if no post ID (shouldn't happen with new implementation)
+                url = `${window.location.origin}/accounts/profile/{{ profile_user.username }}/`;
+            }
+            
+            // Use the Clipboard API to copy the URL
+            navigator.clipboard.writeText(url).then(() => {
+                // Show success message
+                const originalText = copyLinkBtn.querySelector('span').textContent;
+                copyLinkBtn.querySelector('span').textContent = 'Copied!';
+                setTimeout(() => {
+                    copyLinkBtn.querySelector('span').textContent = originalText;
+                }, 2000);
+                
+                // Close modal after copying
+                setTimeout(() => {
+                    shareModal.classList.add('hidden');
+                }, 1000);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy link. Please try again.');
+            });
+        });
+    }
+    
+    // Share to social media
+    document.getElementById('share-to-twitter').addEventListener('click', function() {
+        const currentSlide = items[currentIndex];
+        const postId = currentSlide.getAttribute('data-id');
+        let url, text;
+        
+        if (postId) {
+            url = `${window.location.origin}/posts/${postId}/`;
+            text = `Check out this post from {{ profile_user.username }} on NoChat!`;
+        } else {
+            url = `${window.location.origin}/accounts/profile/{{ profile_user.username }}/`;
+            text = `Check out {{ profile_user.username }}'s profile on NoChat!`;
+        }
+        
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        shareModal.classList.add('hidden');
+    });
+    
+    document.getElementById('share-to-facebook').addEventListener('click', function() {
+        const currentSlide = items[currentIndex];
+        const postId = currentSlide.getAttribute('data-id');
+        let url;
+        
+        if (postId) {
+            url = `${window.location.origin}/posts/${postId}/`;
+        } else {
+            url = `${window.location.origin}/accounts/profile/{{ profile_user.username }}/`;
+        }
+        
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        shareModal.classList.add('hidden');
+    });
+    
+    document.getElementById('share-to-dm').addEventListener('click', function() {
+        const currentSlide = items[currentIndex];
+        const postId = currentSlide.getAttribute('data-id');
+        
+        // Redirect to messaging with prefilled content
+        if (postId) {
+            window.location.href = `/messaging/share/?type=post&id=${postId}`;
+        } else {
+            window.location.href = `/messaging/share/?type=profile&username={{ profile_user.username }}`;
+        }
+        
+        shareModal.classList.add('hidden');
+    });
+    
+    // Like button functionality
+    const likeBtn = document.getElementById('like-btn');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', async function() {
+            const postId = this.getAttribute('data-post-id');
+            if (!postId) {
+                alert('Unable to like this content.');
+                return;
+            }
+            
+            likePost(postId);
+        });
+    }
+    
+    // Function to like a post
+    async function likePost(postId) {
+        try {
+            const response = await fetch(`/posts/${postId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Update like button appearance
+                if (data.action === 'liked') {
+                    likeBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                        </svg>
+                    `;
+                    
+                    // Update data-is-liked attribute
+                    const currentSlide = items[currentIndex];
+                    currentSlide.setAttribute('data-is-liked', 'true');
+                } else {
+                    likeBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    `;
+                    
+                    // Update data-is-liked attribute
+                    const currentSlide = items[currentIndex];
+                    currentSlide.setAttribute('data-is-liked', 'false');
+                }
+                
+                // Update likes count
+                document.getElementById('likes-count').textContent = `${data.likes_count} likes`;
+                
+                // Update data attribute on current slide
+                const currentSlide = items[currentIndex];
+                currentSlide.setAttribute('data-likes', data.likes_count);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+    
+    // Save button functionality
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async function() {
+            const postId = this.getAttribute('data-post-id');
+            if (!postId) {
+                alert('Unable to save this content.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/posts/${postId}/save/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update save button appearance
+                    if (data.action === 'saved') {
+                        this.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-black dark:text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                            </svg>
+                        `;
+                        
+                        // Update data-is-saved attribute
+                        const currentSlide = items[currentIndex];
+                        currentSlide.setAttribute('data-is-saved', 'true');
+                    } else {
+                        this.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                            </svg>
+                        `;
+                        
+                        // Update data-is-saved attribute
+                        const currentSlide = items[currentIndex];
+                        currentSlide.setAttribute('data-is-saved', 'false');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+    
+    // Comment input functionality
+    const commentInput = document.getElementById('comment-input');
+    const commentSubmit = document.getElementById('comment-submit');
+    
+    // Enable/disable submit button based on input
+    commentInput.addEventListener('input', function() {
+        commentSubmit.disabled = this.value.trim() === '';
+    });
+    
+    // Comment form submission
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+        commentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentSlide = items[currentIndex];
+            const postId = currentSlide.getAttribute('data-id');
+            if (!postId) {
+                alert('Unable to comment on this content.');
+                return;
+            }
+            
+            const commentText = commentInput.value.trim();
+            if (!commentText) return;
+            
+            // Check if this is a reply
+            const parentId = commentForm.getAttribute('data-parent-id');
+            const formData = {
+                text: commentText
+            };
+            
+            if (parentId) {
+                formData.parent_id = parentId;
+            }
+            
+            try {
+                const response = await fetch(`/posts/${postId}/comment/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Add the new comment to the comments section
+                    const commentsSection = document.getElementById('comments-section');
+                    const newComment = document.createElement('div');
+                    newComment.className = 'mb-3';
+                    newComment.innerHTML = `
+                        <div class="flex items-start">
+                            <img src="${data.comment.user.profile_picture}" alt="${data.comment.user.username}" class="w-6 h-6 rounded-full mr-2">
+                            <div>
+                                <span class="font-semibold">${data.comment.user.username}</span>
+                                <span>${data.comment.text}</span>
+                                <div class="text-xs text-gray-400 mt-1">
+                                    just now
+                                    <button class="ml-2 text-gray-400 hover:text-gray-300 reply-btn" data-comment-id="${data.comment.id}">Reply</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    commentsSection.appendChild(newComment);
+                    
+                    // Update comments count
+                    const commentsCount = document.getElementById('comments-count');
+                    commentsCount.textContent = `${data.comments_count} comments`;
+                    
+                    // Update data attribute on current slide
+                    currentSlide.setAttribute('data-comments', data.comments_count);
+                    
+                    // Clear input
+                    commentInput.value = '';
+                    commentSubmit.disabled = true;
+                    
+                    // Clear parent ID if this was a reply
+                    commentForm.removeAttribute('data-parent-id');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    }
+    
+    // Comment button functionality (focus on comment input)
+    const commentBtn = document.getElementById('comment-btn');
+    if (commentBtn) {
+        commentBtn.addEventListener('click', function() {
+            const currentSlide = items[currentIndex];
+            const postId = currentSlide.getAttribute('data-id');
+            if (!postId) {
+                alert('Unable to comment on this content.');
+                return;
+            }
+            
+            commentInput.focus();
+        });
+    }
+    
+    // Reply button functionality (delegated event)
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('reply-btn')) {
+            const commentId = e.target.getAttribute('data-comment-id');
+            const username = e.target.closest('.flex').querySelector('.font-semibold').textContent;
+            
+            // Add @username to comment input
+            commentInput.value = `@${username} `;
+            commentInput.focus();
+            
+            // Store parent comment ID for reply
+            commentForm.setAttribute('data-parent-id', commentId);
+            
+            // Enable submit button
+            commentSubmit.disabled = false;
+        }
+    });
+});
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+</script>
+{% endblock %}

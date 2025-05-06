@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NoChat - Explore{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 p-4">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold mb-4">Explore</h1>
+        
+        <!-- Search bar -->
+        <form method="get" action="{% url 'search:results' %}" class="mb-6">
+            <div class="relative">
+                <input type="text" name="q" placeholder="Search for people, hashtags, or topics" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="absolute right-2 top-2 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </div>
+        </form>
+        
+        <!-- Trending hashtags -->
+        {% if trending_hashtags %}
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-3">Trending Hashtags</h2>
+            <div class="flex flex-wrap gap-2">
+                {% for trending in trending_hashtags %}
+                <a href="{% url 'search:hashtag' trending.hashtag.name %}" class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600">
+                    #{{ trending.hashtag.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Popular posts grid -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-3">Popular Posts</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-2">
+                {% for post in popular_posts %}
+                <a href="{% url 'posts:detail' post.id %}" class="relative aspect-square overflow-hidden">
+                    {% if post.post_type == 'video' %}
+                    <div class="absolute top-2 right-2 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    {% elif post.post_type == 'carousel' %}
+                    <div class="absolute top-2 right-2 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                    </div>
+                    {% endif %}
+                    
+                    <img src="{{ post.media_files.first.file.url }}" alt="Post by {{ post.user.username }}" class="w-full h-full object-cover">
+                    
+                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <div class="flex space-x-4">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                                </svg>
+                                <span>{{ post.likes_count }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+                                </svg>
+                                <span>{{ post.comments_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    No popular posts to show right now.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Trending reels -->
+        <div>
+            <h2 class="text-xl font-semibold mb-3">Trending Reels</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-2">
+                {% for reel in trending_reels %}
+                <a href="{% url 'reels:detail' reel.id %}" class="relative aspect-[9/16] overflow-hidden">
+                    <img src="{{ reel.thumbnail.url }}" alt="Reel by {{ reel.user.username }}" class="w-full h-full object-cover">
+                    
+                    <div class="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black to-transparent text-white">
+                        <div class="flex items-center">
+                            <img src="{{ reel.user.profile_picture.url }}" alt="{{ reel.user.username }}" class="w-6 h-6 rounded-full mr-2">
+                            <span class="text-sm truncate">{{ reel.user.username }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="absolute top-2 right-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    
+                    <div class="absolute right-2 bottom-10 flex flex-col space-y-2 text-white">
+                        <div class="flex flex-col items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-xs">{{ reel.likes_count }}</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-xs">{{ reel.comments_count }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    No trending reels to show right now.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Log activity
+    function logActivity(activityType, contentId = '') {
+        fetch('{% url "core:log_activity" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `activity_type=${activityType}&content_id=${contentId}`,
+        });
+    }
+    
+    // Log page view
+    document.addEventListener('DOMContentLoaded', function() {
+        logActivity('page_view', 'explore');
+    });
+</script>
+{% endblock %}

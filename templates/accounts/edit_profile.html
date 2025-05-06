@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile | NoChat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-pic-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+    .profile-pic {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    .profile-pic-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        cursor: pointer;
+    }
+    .profile-pic-container:hover .profile-pic-overlay {
+        opacity: 1;
+    }
+    .form-section {
+        transition: all 0.3s ease;
+    }
+    .form-section:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    .dark .form-section:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+    .input-field:focus {
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 1px #3B82F6;
+    }
+    .dark .input-field:focus {
+        border-color: #60A5FA;
+        box-shadow: 0 0 0 1px #60A5FA;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 py-8">
+    <div class="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h1 class="text-xl font-bold">Edit Profile</h1>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            
+            {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                <div class="p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300{% elif message.tags == 'error' %}bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300{% else %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Profile Picture -->
+            <div class="form-section p-4 rounded-lg mb-6">
+                <h2 class="text-lg font-semibold mb-4">Profile Picture</h2>
+                <div class="profile-pic-container">
+                    <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="profile-pic">
+                    <label for="id_profile_picture" class="profile-pic-overlay">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                        </svg>
+                    </label>
+                    <input type="file" name="profile_picture" id="id_profile_picture" class="hidden" accept="image/*">
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">Click to change your profile picture</p>
+            </div>
+            
+            <!-- Basic Information -->
+            <div class="form-section p-4 rounded-lg mb-6">
+                <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="id_first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+                        <input type="text" name="first_name" id="id_first_name" value="{{ form.first_name.value|default:'' }}" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">
+                        {% if form.first_name.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.first_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="id_last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
+                        <input type="text" name="last_name" id="id_last_name" value="{{ form.last_name.value|default:'' }}" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">
+                        {% if form.last_name.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="id_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                        <input type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">
+                        {% if form.username.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="id_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                        <input type="email" name="email" id="id_email" value="{{ form.email.value|default:'' }}" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">
+                        {% if form.email.errors %}
+                        <p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bio and Website -->
+            <div class="form-section p-4 rounded-lg mb-6">
+                <h2 class="text-lg font-semibold mb-4">Bio and Website</h2>
+                
+                <div class="mb-4">
+                    <label for="id_bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
+                    <textarea name="bio" id="id_bio" rows="4" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">{{ form.bio.value|default:'' }}</textarea>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ form.bio.help_text }}</p>
+                    {% if form.bio.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.bio.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="id_website" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Website</label>
+                    <input type="url" name="website" id="id_website" value="{{ form.website.value|default:'' }}" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">
+                    {% if form.website.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.website.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="form-section p-4 rounded-lg mb-6">
+                <h2 class="text-lg font-semibold mb-4">Contact Information</h2>
+                
+                <div>
+                    <label for="id_phone_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+                    <input type="tel" name="phone_number" id="id_phone_number" value="{{ form.phone_number.value|default:'' }}" class="input-field w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none dark:bg-gray-700 dark:text-white">
+                    {% if form.phone_number.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.phone_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Privacy Settings -->
+            <div class="form-section p-4 rounded-lg mb-6">
+                <h2 class="text-lg font-semibold mb-4">Privacy Settings</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_private" id="id_is_private" {% if form.is_private.value %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="id_is_private" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Private Account</label>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 ml-6">When your account is private, only people you approve can see your photos and videos.</p>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="show_activity_status" id="id_show_activity_status" {% if form.show_activity_status.value %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="id_show_activity_status" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Show Activity Status</label>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 ml-6">Allow accounts you follow and anyone you message to see when you were last active.</p>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="allow_sharing" id="id_allow_sharing" {% if form.allow_sharing.value %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="id_allow_sharing" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Allow Sharing</label>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 ml-6">Let people share your posts in their stories and messages.</p>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="allow_mentions" id="id_allow_mentions" {% if form.allow_mentions.value %}checked{% endif %} class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="id_allow_mentions" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Allow Mentions</label>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 ml-6">Allow others to mention you in their posts and comments.</p>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview profile picture before upload
+    document.getElementById('id_profile_picture').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.querySelector('.profile-pic').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

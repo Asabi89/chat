@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}NoChat - Home{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 p-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Feed -->
+        <div class="lg:col-span-2">
+            <!-- Stories -->
+            {% if stories %}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-4 overflow-x-auto">
+                <div class="flex space-x-4">
+                    {% for story in stories %}
+                    <a href="{% url 'stories:view' story.id %}" class="flex flex-col items-center">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 p-0.5">
+                            <img src="{{ story.user.profile_picture.url }}" alt="{{ story.user.username }}" class="w-full h-full rounded-full border-2 border-white dark:border-gray-800">
+                        </div>
+                        <span class="text-xs mt-1 truncate w-16 text-center">{{ story.user.username }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Posts -->
+            <div class="space-y-6">
+                {% for post in posts %}
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <!-- Post Header -->
+                    <div class="flex items-center p-4">
+                        <a href="{% url 'accounts:profile' post.user.username %}" class="flex items-center">
+                            <img src="{{ post.user.profile_picture.url }}" alt="{{ post.user.username }}" class="w-8 h-8 rounded-full mr-2">
+                            <span class="font-semibold">{{ post.user.username }}</span>
+                        </a>
+                        <div class="ml-auto">
+                            <button class="text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Post Media -->
+                    <div class="relative">
+                        {% if post.post_type == 'carousel' %}
+                        <div class="carousel" id="carousel-{{ post.id }}">
+                            {% for media in post.media_files.all %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                {% if media.media_type == 'image' %}
+                                <img src="{{ media.file.url }}" alt="Post image" class="w-full">
+                                {% else %}
+                                <video controls class="w-full">
+                                    <source src="{{ media.file.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            
+                            {% if post.media_files.count > 1 %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ post.id }}" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ post.id }}" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% elif post.post_type == 'video' %}
+                        <video controls class="w-full">
+                            <source src="{{ post.media_files.first.file.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        {% else %}
+                        <img src="{{ post.media_files.first.file.url }}" alt="Post image" class="w-full">
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Post Actions -->
+                    <div class="p-4">
+                        <div class="flex space-x-4">
+                            <button class="text-gray-500 hover:text-red-500 like-button" data-post-id="{{ post.id }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </button>
+                            <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" onclick="location.href='{% url 'posts:detail' post.id %}'">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                            </button>
+                            <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 share-button" data-post-id="{{ post.id }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                            </button>
+                            <button class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 ml-auto save-button" data-post-id="{{ post.id }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Likes count -->
+                        <div class="mt-2">
+                            <span class="font-semibold">{{ post.likes_count }} likes</span>
+                        </div>
+                        
+                        <!-- Caption -->
+                        {% if post.caption %}
+                        <div class="mt-2">
+                            <span class="font-semibold">{{ post.user.username }}</span>
+                            <span>{{ post.caption }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Comments preview -->
+                        {% if post.comments_count > 0 %}
+                        <div class="mt-2">
+                            <a href="{% url 'posts:detail' post.id %}" class="text-gray-500">View all {{ post.comments_count }} comments</a>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Timestamp -->
+                        <div class="mt-2">
+                            <span class="text-xs text-gray-500">{{ post.created_at|timesince }} ago</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Comment form -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                        <form method="post" action="{% url 'posts:comment' post.id %}" class="flex">
+                            {% csrf_token %}
+                            <input type="text" name="text" placeholder="Add a comment..." class="flex-grow bg-transparent focus:outline-none">
+                            <button type="submit" class="text-blue-500 font-semibold ml-2">Post</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+                    <p class="text-gray-500 dark:text-gray-400">No posts to show. Follow more users to see their posts here!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:block hidden">
+            <!-- User profile card -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+                <div class="flex items-center">
+                    <a href="{% url 'accounts:profile' user.username %}" class="flex items-center">
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="w-12 h-12 rounded-full mr-3">
+                        <div>
+                            <div class="font-semibold">{{ user.username }}</div>
+                            <div class="text-gray-500 text-sm">{{ user.get_full_name }}</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Suggested users -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-gray-500 font-semibold">Suggestions For You</h3>
+                    <a href="{% url 'core:explore' %}" class="text-sm font-semibold">See All</a>
+                </div>
+                
+                {% for suggested_user in suggested_users %}
+                <div class="flex items-center justify-between mb-3">
+                    <a href="{% url 'accounts:profile' suggested_user.username %}" class="flex items-center">
+                        <img src="{{ suggested_user.profile_picture.url }}" alt="{{ suggested_user.username }}" class="w-8 h-8 rounded-full mr-2">
+                        <div>
+                            <div class="font-semibold text-sm">{{ suggested_user.username }}</div>
+                            <div class="text-gray-500 text-xs">{{ suggested_user.followers_count }} followers</div>
+                        </div>
+                    </a>
+                    <button class="text-blue-500 text-sm font-semibold follow-button" data-username="{{ suggested_user.username }}">Follow</button>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-sm">No suggestions available right now.</p>
+                {% endfor %}
+            </div>
+            
+            <!-- Footer links -->
+            <div class="mt-6 text-xs text-gray-500">
+                <div class="flex flex-wrap">
+                    <a href="{% url 'core:about' %}" class="mr-2 mb-2">About</a>
+                    <a href="{% url 'core:privacy' %}" class="mr-2 mb-2">Privacy</a>
+                    <a href="{% url 'core:terms' %}" class="mr-2 mb-2">Terms</a>
+                    <a href="{% url 'core:feedback' %}" class="mr-2 mb-2">Feedback</a>
+                </div>
+                <div class="mt-2">
+                    © 2023 NoChat from Sourcegraph
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Like post functionality
+    document.querySelectorAll('.like-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            fetch(`/posts/${postId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'liked') {
+                    this.querySelector('svg').classList.add('text-red-500');
+                    this.querySelector('svg').classList.add('fill-current');
+                } else {
+                    this.querySelector('svg').classList.remove('text-red-500');
+                    this.querySelector('svg').classList.remove('fill-current');
+                }
+                // Update like count
+                const likesElement = this.closest('.p-4').querySelector('.font-semibold');
+                likesElement.textContent = `${data.likes_count} likes`;
+            });
+        });
+    });
+    
+    // Follow user functionality
+    document.querySelectorAll('.follow-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const username = this.dataset.username;
+            fetch(`/accounts/${username}/follow/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'following') {
+                    this.textContent = 'Following';
+                    this.classList.remove('text-blue-500');
+                    this.classList.add('text-gray-500');
+                } else {
+                    this.textContent = 'Follow';
+                    this.classList.add('text-blue-500');
+                    this.classList.remove('text-gray-500');
+                }
+            });
+        });
+    });
+    
+    // Log activity
+    function logActivity(activityType, contentId = '') {
+        fetch('{% url "core:log_activity" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `activity_type=${activityType}&content_id=${contentId}`,
+        });
+    }
+    
+    // Log page view
+    document.addEventListener('DOMContentLoaded', function() {
+        logActivity('page_view', 'home');
+    });
+</script>
+{% endblock %}
+   

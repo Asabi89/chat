@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Suggested Users | NoChat{% endblock %}
+
+{% block content %}
+<div class="md:ml-64 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <h1 class="text-2xl font-bold mb-6">Suggested Users to Follow</h1>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+                {% if suggested_users %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for user in suggested_users %}
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <a href="{% url 'accounts:profile' user.username %}">
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="w-12 h-12 rounded-full object-cover">
+                            </a>
+                            <div class="ml-4">
+                                <a href="{% url 'accounts:profile' user.username %}" class="font-medium text-gray-800 dark:text-gray-200 hover:underline">
+                                    {{ user.username }}
+                                    {% if user.is_verified %}
+                                    <span class="inline-block ml-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                    {% endif %}
+                                </a>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ user.get_full_name }}</p>
+                                
+                                {% if user.profile.followers_count > 0 %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {{ user.profile.followers_count }} follower{{ user.profile.followers_count|pluralize }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            {% if request.user.following.filter(following=user).exists %}
+                            <button class="follow-btn px-4 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none text-sm" data-username="{{ user.username }}">
+                                Following
+                            </button>
+                            {% else %}
+                            <button class="follow-btn px-4 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none text-sm" data-username="{{ user.username }}">
+                                Follow
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-semibold mb-2">No Suggestions Available</h2>
+                    <p class="text-gray-500 dark:text-gray-400">We don't have any user suggestions for you at the moment.</p>
+                </div>
+                {% endif %}
+                
+                <div class="mt-8 text-center">
+                    <a href="{% url 'accounts:search_users' %}" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                        Search for More Users
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Follow/Unfollow functionality
+        const followBtns = document.querySelectorAll('.follow-btn');
+        
+        followBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const username = btn.getAttribute('data-username');
+                try {
+                    const response = await fetch(`/accounts/follow/${username}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Update button appearance
+                        if (data.status === 'following') {
+                            btn.textContent = 'Following';
+                            btn.classList.remove('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+                            btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200', 'hover:bg-gray-300', 'dark:hover:bg-gray-600');
+                        } else {
+                            btn.textContent = 'Follow';
+                            btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-800', 'dark:text-gray-200', 'hover:bg-gray-300', 'dark:hover:bg-gray-600');
+                            btn.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    });
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}
